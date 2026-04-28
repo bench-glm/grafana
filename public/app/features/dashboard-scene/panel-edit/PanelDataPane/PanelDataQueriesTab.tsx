@@ -41,6 +41,7 @@ import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { trackAddQuery } from '../PanelEditNext/tracking';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
@@ -305,6 +306,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = () => {
     const queries = this.getQueries();
+    trackAddQuery('new_query', 'legacy', { silent: true });
     this.onQueriesChange(addQuery(queries, this.newQuery()));
   };
 
