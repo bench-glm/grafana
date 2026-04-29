@@ -193,7 +193,7 @@ func TestSyncExternalAMs_FeatureFlagDisabled(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, false, "", []int64{1})
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	adminCfg.AssertNotCalled(t, "GetAdminConfigurations")
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -206,7 +206,7 @@ func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
 	}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -225,7 +225,7 @@ func TestSyncExternalAMs_OperatorUIDOverridesDB(t *testing.T) {
 	}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "operator-uid", []int64{1})
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
@@ -241,7 +241,7 @@ func TestSyncExternalAMs_GetAdminConfigurationsError(t *testing.T) {
 	adminCfg.On("GetAdminConfigurations").Return(nil, fmt.Errorf("db error"))
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -273,7 +273,7 @@ func TestSyncExternalAMs_PerOrgErrorIsolation(t *testing.T) {
 	}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1, 2})
-	moa.syncExternalAMs(context.Background(), []int64{1, 2})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1, 2})
 
 	adminCfg.AssertExpectations(t)
 
@@ -316,7 +316,7 @@ func TestSyncExternalAMs_HTTPTimeout(t *testing.T) {
 	defer cancel()
 
 	start := time.Now()
-	moa.syncExternalAMs(ctx, []int64{1})
+	moa.externalAMSyncer.Sync(ctx, []int64{1})
 	elapsed := time.Since(start)
 
 	assert.Less(t, elapsed, 5*time.Second)
@@ -339,7 +339,7 @@ func TestSyncExternalAMs_SuccessPath(t *testing.T) {
 	}, nil)
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	adminCfg.AssertExpectations(t)
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), 1)
@@ -371,13 +371,13 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	// First tick: stores the config and writes a history row on top of the
 	// bootstrap default. Bootstrap counts as one history entry; the first sync
 	// adds a second.
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2)
 
 	// Second tick on byte-identical Mimir output: hash matches the cached value
 	// for org 1, so SaveAndApplyExtraConfiguration is not called and no new
 	// history row is written.
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2, "no-op sync should not write a new history row")
 
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
@@ -415,10 +415,10 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
 
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 2, "first sync writes one history row on top of bootstrap")
 
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 	require.Len(t, cs.historicConfigs[1], 3, "different response bytes should trigger a new save")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
@@ -450,7 +450,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	require.NoError(t, err)
 	rowsBefore := len(cs.historicConfigs[1])
 
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	// No new history row — the save was rejected.
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "identifier collision must not write history")
@@ -483,7 +483,7 @@ func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
 	rejecting := &rejectingValidator{err: fmt.Errorf("egress denied")}
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, rejecting)
 
-	moa.syncExternalAMs(context.Background(), []int64{1})
+	moa.externalAMSyncer.Sync(context.Background(), []int64{1})
 
 	// Validator rejection short-circuits before the HTTP round-trip and before any save.
 	assertNoExtraConfigSaved(t, cs, 1)
@@ -491,7 +491,7 @@ func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
 }
 
 func TestBuildMimirConfigURL(t *testing.T) {
-	moa := &MultiOrgAlertmanager{}
+	syncer := &ExternalAMSyncer{}
 
 	tests := []struct {
 		name   string
@@ -516,7 +516,7 @@ func TestBuildMimirConfigURL(t *testing.T) {
 				UID: "test-uid",
 				URL: tc.dsURL,
 			}
-			got, err := moa.buildMimirConfigURL(ds)
+			got, err := syncer.buildMimirConfigURL(ds)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expect, got)
 		})
