@@ -145,6 +145,50 @@
     },
     {
       "metadata": {
+        "name": "alerting.v0ReceiversAsGrafana",
+        "resourceVersion": "1777476878000",
+        "creationTimestamp": "2026-04-29T15:34:38Z",
+        "deletionTimestamp": "2026-04-29T15:51:20Z"
+      },
+      "spec": {
+        "description": "Convert legacy Alertmanager receivers to Grafana model",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alerting.v0ReceiversAsLegacy",
+        "resourceVersion": "1777477880224",
+        "creationTimestamp": "2026-04-29T15:51:20Z"
+      },
+      "spec": {
+        "description": "When disabled convert legacy Alertmanager receivers to Grafana model",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alerting.v0receiversAsGrafana",
+        "resourceVersion": "1777476847956",
+        "creationTimestamp": "2026-04-29T15:33:22Z",
+        "deletionTimestamp": "2026-04-29T15:34:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-29 15:34:07.956423078 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Convert legacy Alertmanager receivers to Grafana model",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-16T16:42:42Z"
