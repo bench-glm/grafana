@@ -3078,12 +3078,13 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.woooooooooo",
-			Description: "Route any calls to legacy correlations endpoints to call through to app platform",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
-			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Name:         "grafana.meticulousAIRecorder",
+			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{React: true, Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
