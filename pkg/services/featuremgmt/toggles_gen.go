@@ -961,4 +961,8 @@ const (
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
+
+	// FlagGrafanaKubernetesPreferences
+	// Routes legacy /api preferences endpoints through the preferences.grafana.app app platform API
+	FlagGrafanaKubernetesPreferences = "grafana.kubernetesPreferences"
 )

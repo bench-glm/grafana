@@ -3069,6 +3069,15 @@ var (
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
+		{
+			Name:            "grafana.kubernetesPreferences",
+			Description:     "Routes legacy /api preferences endpoints through the preferences.grafana.app app platform API",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			Owner:           grafanaFrontendPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

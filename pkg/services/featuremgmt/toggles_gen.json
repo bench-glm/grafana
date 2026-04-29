@@ -2570,6 +2570,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.kubernetesPreferences",
+        "resourceVersion": "1777401806345",
+        "creationTimestamp": "2026-04-28T18:43:26Z"
+      },
+      "spec": {
+        "description": "Routes legacy /api preferences endpoints through the preferences.grafana.app app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1775304981849",
         "creationTimestamp": "2026-04-04T12:16:21Z"
