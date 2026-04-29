@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
@@ -136,4 +137,52 @@ func TemplateDefinitionsToPostableAPITemplates(ts []templates.TemplateDefinition
 		defs = append(defs, TemplateDefinitionToPostableAPITemplate(t))
 	}
 	return defs
+}
+
+// PostableMimirReceiverToIntegrations converts all legacy models to apimodels.PostableGrafanaReceiver.
+// If receiver does not have any legacy receivers, returns the original receiver.
+// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
+func PostableMimirReceiverToIntegrations(r *apimodels.PostableApiReceiver) (*apimodels.PostableApiReceiver, error) {
+	if !r.HasMimirIntegrations() {
+		return r, nil
+	}
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := &apimodels.PostableApiReceiver{
+		Receiver: apimodels.Receiver{
+			Name: r.Receiver.Name,
+		},
+		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*apimodels.PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
+		},
+	}
+	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
+	for idx, config := range v0 {
+		integration, err := MimirIntegrationConfigToPostableGrafanaReceiver(config, r.Name, idx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
+		}
+		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+	}
+	return result, nil
+}
+
+// MimirIntegrationConfigToPostableGrafanaReceiver Converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
+func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*definition.PostableGrafanaReceiver, error) {
+	raw, err := config.ConfigJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &definition.PostableGrafanaReceiver{
+		UID:                   fmt.Sprintf("%s-%d", models.NameToUid(receiverName), idx),
+		Name:                  receiverName,
+		Type:                  string(config.Schema.Type()),
+		Version:               string(config.Schema.Version),
+		DisableResolveMessage: false, // V0 ignore this flag as they have their own SendResolved one.
+		Settings:              raw,
+		SecureSettings:        nil,
+	}, nil
 }

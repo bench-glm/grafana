@@ -88,6 +88,26 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		moa.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
 	}
 	preparedConfig := mergeResult.Config
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingV0ReceiversAsLegacy) {
+		moa.logger.Info("Skipping converting Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier)
+	} else {
+		converted, failed := 0, 0
+		for idx, recv := range preparedConfig.Receivers {
+			if !recv.HasMimirIntegrations() {
+				continue
+			}
+			grafana, err := PostableMimirReceiverToIntegrations(recv)
+			if err != nil {
+				moa.logger.Warn("Failed to convert Mimir receiver to Grafana receiver. Using receiver as is", "identifier", mergeResult.Identifier, "receiver", recv.Name, "err", err)
+				failed++
+				continue
+			}
+			preparedConfig.Receivers[idx] = grafana
+			converted++
+		}
+		moa.logger.Info("Converted Mimir receivers to Grafana receivers", "identifier", mergeResult.Identifier, "converted", converted, "failed", failed)
+	}
 
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
