@@ -135,7 +135,14 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		adminConfig.SendAlertsTo = &sendAlertsTo
 	}
 
-	if body.ExternalAlertmanagerUID != nil && ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+	if body.ExternalAlertmanagerUID != nil {
+		// Reject up front when sync is disabled rather than silently dropping the
+		// field. Returning 201 with the value not persisted hides integration bugs
+		// (callers think the UID was saved, but it wasn't).
+		if !ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+			return response.Error(http.StatusBadRequest, "external alertmanager UID sync is disabled on this instance", nil)
+		}
+
 		// When the operator-level ini value is set it is authoritative for all orgs,
 		// so the API must not let users overwrite or clear it via admin_config writes.
 		// Reject any UID write attempt up front (regardless of whether the body value
