@@ -299,6 +299,7 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.DataSourceService,
 		ng.httpClientProvider,
+		ng.DataProxy.DataSourceRequestValidator,
 		opts...,
 	)
 	if err != nil {
