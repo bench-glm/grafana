@@ -55,6 +55,13 @@ jobs:
               - 'scripts/go/**'
               - '.air.toml'
 
+      - name: Log changed files
+        run: |
+          echo "### Frontend changed files"
+          echo "${{ steps.changed-files.outputs.frontend_strict_all_changed_files }}" | tr ' ' '\n'
+          echo "### Backend changed files"
+          echo "${{ steps.changed-files.outputs.backend_strict_all_changed_files }}" | tr ' ' '\n'
+
   check-separation:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict == 'true'
