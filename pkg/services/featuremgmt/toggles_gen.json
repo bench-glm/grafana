@@ -2584,6 +2584,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.woooooooooo",
+        "resourceVersion": "1777491026371",
+        "creationTimestamp": "2026-04-29T19:30:26Z"
+      },
+      "spec": {
+        "description": "Route any calls to legacy correlations endpoints to call through to app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"

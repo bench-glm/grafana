@@ -961,4 +961,8 @@ const (
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
+
+	// FlagGrafanaWoooooooooo
+	// Route any calls to legacy correlations endpoints to call through to app platform
+	FlagGrafanaWoooooooooo = "grafana.woooooooooo"
 )
